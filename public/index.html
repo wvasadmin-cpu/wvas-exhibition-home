@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Exhibition — Welland Valley Art Society</title>
+  <meta name="description" content="Welland Valley Art Society exhibitions at Stamford Arts Centre: enter, steward, browse the catalogue and meet the artists." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Source+Sans+3:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --green-dark: #2c4a3e; --green-mid: #3d6b5a; --cream: #f7f3ee; --cream-dark: #ede8e0;
+      --text: #2a2218; --text-mid: #5a4a3a; --text-light: #8a7a6a; --rule: #d8d0c4;
+      /* Seasonal accent: set from the exhibition title (Spring / Autumn) */
+      --accent: #c8a96e; --accent-ink: #5c4a20; --accent-tint: #f4ecdc;
+    }
+    body.spring { --accent: #d98ca0; --accent-ink: #6e2f40; --accent-tint: #f6e1e6; }
+    body { background: var(--cream); font-family: 'Source Sans 3', sans-serif; color: var(--text); font-size: 16px; line-height: 1.6; }
+    a { color: var(--green-dark); }
+
+    #site-header { background: var(--green-dark); border-bottom: 4px solid var(--accent); padding: 18px 24px; }
+    #site-header .inner { max-width: 760px; margin: 0 auto; display: flex; align-items: center; gap: 16px; }
+    #site-header img { width: 56px; height: 56px; object-fit: contain; background: #fff; padding: 4px; flex-shrink: 0; }
+    #site-header .eyebrow { font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent); }
+    #site-header .name { font-family: 'Playfair Display', serif; font-size: 19px; color: var(--cream); }
+
+    main { max-width: 760px; margin: 0 auto; padding: 28px 20px 48px; }
+    .pill { display: inline-block; font-size: 14px; font-weight: 600; padding: 4px 12px; border-radius: 20px; background: var(--accent-tint); color: var(--accent-ink); }
+    h1 { font-family: 'Playfair Display', serif; font-weight: 400; font-size: clamp(28px, 6vw, 38px); color: var(--green-dark); line-height: 1.2; margin: 10px 0 4px; }
+    .venue { font-size: 16px; color: var(--text-mid); margin-bottom: 22px; }
+
+    .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 22px; }
+    .card { display: block; background: #fff; border: 1px solid var(--rule); border-radius: 10px; padding: 16px 18px; text-decoration: none; color: inherit; transition: border-color .15s; }
+    a.card:hover, a.card:focus-visible { border-color: var(--green-mid); }
+    .card.lead { border: 2px solid var(--accent); }
+    .card.muted { background: var(--cream-dark); }
+    .card b { display: block; font-family: 'Playfair Display', serif; font-weight: 400; font-size: 20px; color: var(--green-dark); margin-bottom: 2px; }
+    .card span { font-size: 14px; color: var(--text-mid); }
+
+    .panel { background: #fff; border: 1px solid var(--rule); border-radius: 10px; padding: 16px 18px; margin-bottom: 22px; }
+    .panel h2 { font-family: 'Playfair Display', serif; font-weight: 400; font-size: 20px; color: var(--green-dark); margin-bottom: 8px; }
+    .panel p { font-size: 15px; color: var(--text-mid); margin-bottom: 8px; }
+    .panel p:last-child { margin-bottom: 0; }
+    .panel ul { margin: 4px 0 10px 20px; font-size: 15px; color: var(--text-mid); }
+    .dates { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px 18px; font-size: 14px; color: var(--text-mid); }
+    .dates strong { display: block; color: var(--text); font-weight: 600; }
+    .links { font-size: 15px; }
+    .hall { width: 100%; height: auto; display: block; border: 1px solid var(--rule); border-radius: 10px; margin-bottom: 22px; }
+
+    footer { border-top: 4px solid var(--accent); padding: 14px 20px; }
+    footer .inner { max-width: 760px; margin: 0 auto; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; font-size: 14px; color: var(--text-mid); }
+    footer a { color: var(--text-mid); }
+
+    #loading { color: var(--text-light); font-size: 15px; }
+    @media (max-width: 560px) { .cards { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+
+<header id="site-header">
+  <div class="inner">
+    <img src="/wvas-logo.jpg" alt="WVAS logo" />
+    <div>
+      <div class="eyebrow">Welland Valley Art Society</div>
+      <div class="name">Exhibition</div>
+    </div>
+  </div>
+</header>
+
+<main id="page">
+  <p id="loading">Loading…</p>
+</main>
+
+<footer>
+  <div class="inner">
+    <a href="https://www.wellandvalleyartsociety.co.uk/">Welland Valley Art Society website →</a>
+    <span>Exhibition contact: <a href="mailto:wvas_exhibition@yahoo.com">wvas_exhibition@yahoo.com</a></span>
+  </div>
+</footer>
+
+<script>
+/* ============================================================
+   LINKS — the only place the other sites' addresses live.
+   (The rota will move from Vercel to Netlify: change it here.)
+   ============================================================ */
+const LINKS = {
+  enter:       'https://wvas-ex-entry.netlify.app/',
+  howToEnter:  'https://wvas-ex-guide.netlify.app/',
+  rotaBook:    'https://wellandvalleyrota.vercel.app/book',
+  rotaBooked:  'https://wellandvalleyrota.vercel.app/booked',
+  profiles:    'https://wvas-ex-profiles.netlify.app/',
+  catalogue:   'https://wvas-ex-catalogue.netlify.app/catalogue/',
+  artists:     'https://wvas-ex-catalogue.netlify.app/profiles/',
+  wvas:        'https://www.wellandvalleyartsociety.co.uk/',
+  venue:       'https://www.stamfordartscentre.com/',
+  map:         'https://www.google.com/maps/search/?api=1&query=Stamford+Arts+Centre%2C+27+St+Mary%27s+Street%2C+Stamford+PE9+2DL',
+};
+// Title, dates and the phase-switching dates are set on the entry form's settings page (/admin/).
+const CONFIG_URL = 'https://wvas-ex-entry.netlify.app/.netlify/functions/config';
+
+/* ---------- small helpers (everything from Config is inserted as text, never HTML) ---------- */
+function el(tag, attrs, children) {
+  const n = document.createElement(tag);
+  Object.entries(attrs || {}).forEach(([k, v]) => {
+    if (k === 'text') n.textContent = v; else if (k === 'class') n.className = v; else n.setAttribute(k, v);
+  });
+  (children || []).forEach((c) => c && n.appendChild(c));
+  return n;
+}
+function card(title, sub, href, opts) {
+  opts = opts || {};
+  const cls = 'card' + (opts.lead ? ' lead' : '') + (href ? '' : ' muted');
+  return el(href ? 'a' : 'div', href ? { class: cls, href: href } : { class: cls },
+    [el('b', { text: title }), el('span', { text: sub })]);
+}
+function datesPanel(title, rows) {
+  const items = rows.filter(([, v]) => v).map(([label, v]) => el('div', {}, [el('strong', { text: v }), document.createTextNode(label)]));
+  return items.length ? el('section', { class: 'panel' }, [el('h2', { text: title }), el('div', { class: 'dates' }, items)]) : null;
+}
+function findUsPanel() {
+  return el('section', { class: 'panel', id: 'find-us' }, [
+    el('h2', { text: 'Find us' }),
+    el('p', { text: "Stamford Arts Centre, 27 St Mary's Street, Stamford PE9 2DL. It runs parallel to the High Street, about a mile off the A1, and is a short walk from the train and bus stations." }),
+    el('h2', { text: 'Parking', style: 'font-size:17px; margin-top:10px;' }),
+    el('ul', {}, [
+      el('li', { text: "Wharf Road car park, about 3 minutes' walk" }),
+      el('li', { text: "Also Cattle Market, Bath Row, or St Leonard's Street (short stay)" }),
+      el('li', { text: 'Free in town after 6pm' }),
+      el('li', { text: "Blue Badge spaces on St Mary's Street and St George's Square" }),
+    ]),
+    el('p', { class: 'links' }, [
+      el('a', { href: LINKS.map, text: 'Map' }), document.createTextNode(' · '),
+      el('a', { href: LINKS.venue, text: 'Arts Centre visitor information' }),
+    ]),
+  ]);
+}
+
+/* ---------- which phase are we in? ---------- */
+// Test any phase or day without changing the settings: ?phase=artists|closed|visitors|between or ?date=2027-04-10
+function todayIso() {
+  const q = new URLSearchParams(location.search).get('date');
+  if (q && /^\d{4}-\d{2}-\d{2}$/.test(q)) return q;
+  const d = new Date();
+  return [d.getFullYear(), String(d.getMonth() + 1).padStart(2, '0'), String(d.getDate()).padStart(2, '0')].join('-');
+}
+function phaseFor(c) {
+  const forced = new URLSearchParams(location.search).get('phase');
+  if (['artists', 'closed', 'visitors', 'between', 'upcoming'].includes(forced)) return forced;
+  if (c.unavailable) return 'between';
+  const today = todayIso();
+  if (c.exhibitionOpensOn && c.exhibitionClosesOn && today >= c.exhibitionOpensOn && today <= c.exhibitionClosesOn) return 'visitors';
+  if (c.exhibitionClosesOn && today > c.exhibitionClosesOn) return 'between';
+  if (c.entryOpensOn && today < c.entryOpensOn) return 'upcoming';
+  const closesAt = c.entryClosesAt ? new Date(c.entryClosesAt) : null;
+  const now = new URLSearchParams(location.search).get('date') ? new Date(today + 'T12:00:00') : new Date();
+  return closesAt && !isNaN(closesAt) && now >= closesAt ? 'closed' : 'artists';
+}
+
+/* ---------- render ---------- */
+function render(c) {
+  const title = (c.mainTitle || 'Exhibition').replace(/\s*[—–-]\s*Entry Form\s*$/i, '').trim();
+  document.body.classList.toggle('spring', /spring/i.test(title));
+  document.title = title + ' — Welland Valley Art Society';
+  const phase = phaseFor(c);
+  const venue = 'Stamford Arts Centre' + (c.exhibitionDates ? ' · ' + c.exhibitionDates : '');
+  const page = document.getElementById('page');
+  page.replaceChildren();
+
+  const hero = (pillText, heading, sub) => [
+    pillText ? el('span', { class: 'pill', text: pillText }) : null,
+    el('h1', { text: heading }),
+    el('p', { class: 'venue', text: sub }),
+  ];
+  const keyDates = () => datesPanel('Key dates', [
+    ['Entries close', c.entryCloses], ['Hand-in', c.handIn], ['Private view', c.privateView],
+    ['Exhibition', c.exhibitionDates], ['Collection', c.collection],
+  ]);
+  const add = (nodes) => nodes.forEach((n) => n && page.appendChild(n));
+
+  if (phase === 'artists') {
+    add(hero(c.entryCloses ? 'Entries now open · closes ' + c.entryCloses : 'Entries now open', title, venue));
+    add([el('div', { class: 'cards' }, [
+      card('Enter the exhibition', 'Online entry form', LINKS.enter, { lead: true }),
+      card('How to enter', 'Guidelines and conditions of entry', LINKS.howToEnter),
+      card('Book a stewarding shift', 'Expected of all exhibitors', LINKS.rotaBook),
+      card('Artist profiles', 'Add or update yours', LINKS.profiles),
+    ]), keyDates()]);
+  } else if (phase === 'closed') {
+    add(hero(c.handIn ? 'Entries closed · hand-in ' + c.handIn : 'Entries now closed', title, venue));
+    add([el('div', { class: 'cards' }, [
+      card('Book a stewarding shift', 'Expected of all exhibitors', LINKS.rotaBook, { lead: true }),
+      card('How to enter', 'Guidelines and conditions of entry', LINKS.howToEnter),
+      card('Entries are closed', 'Thank you to everyone who entered', null),
+      card('Artist profiles', 'Add or update yours', LINKS.profiles),
+    ]), keyDates()]);
+  } else if (phase === 'visitors') {
+    add(hero('Open now' + (c.exhibitionDates ? ' · ' + c.exhibitionDates : ''), title, 'Stamford Arts Centre' + (c.openingTimes ? ' · ' + c.openingTimes : '')));
+    add([el('div', { class: 'cards' }, [
+      card('Browse the catalogue', 'Filter artists by name / view profiles', LINKS.catalogue, { lead: true }),
+      card('Meet the artists', 'Profiles and biographies', LINKS.artists),
+      card('Find us', 'Directions, parking, Blue Badge spaces', '#find-us'),
+      card('Stewards', 'Check your shift', LINKS.rotaBooked),
+    ]), findUsPanel()]);
+  } else {
+    // 'between' (after an exhibition) or 'upcoming' (before entries open): content that doesn't date
+    const next = phase === 'upcoming'
+      ? title + (c.entryOpens ? ' — entries open ' + c.entryOpens : '') + (c.exhibitionDates ? ', exhibition ' + c.exhibitionDates : '') + '.'
+      : (c.nextExhibition || 'Details of our next exhibition will be announced here.');
+    add(hero(phase === 'upcoming' ? 'Coming soon' : null, 'Welland Valley Art Society exhibitions', 'Stamford Arts Centre'));
+    add([
+      el('img', { class: 'hall', src: '/exhibition-hall.jpg', alt: 'A Welland Valley Art Society exhibition at Stamford Arts Centre' }),
+      el('section', { class: 'panel' }, [
+        el('h2', { text: 'Next exhibition' }),
+        el('p', { text: next }),
+      ]),
+      el('section', { class: 'panel' }, [
+        el('h2', { text: 'Our exhibitions' }),
+        el('p', { text: 'Twice a year, in spring and autumn, members of the Welland Valley Art Society show and sell their work at Stamford Arts Centre — paintings, drawings, prints, sculpture and more, all by local artists.' }),
+        el('p', { class: 'links' }, [document.createTextNode('Want to exhibit with us? '), el('a', { href: LINKS.wvas, text: 'Find out more on the society website' })]),
+      ]),
+    ]);
+  }
+}
+
+fetch(CONFIG_URL)
+  .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
+  .then(render)
+  .catch(() => render({ unavailable: true })); // settings unavailable: show the plain "between exhibitions" page rather than nothing
+</script>
+</body>
+</html>

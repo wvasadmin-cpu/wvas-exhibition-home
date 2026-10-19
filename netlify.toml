@@ -1,0 +1,15 @@
+[build]
+  publish = "public"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "SAMEORIGIN"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+# The page decides its phase from today's date, so never serve a stale copy.
+[[headers]]
+  for = "/"
+  [headers.values]
+    Cache-Control = "no-store"
