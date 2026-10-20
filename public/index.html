@@ -64,7 +64,7 @@
     <img src="/wvas-logo.jpg" alt="WVAS logo" />
     <div>
       <div class="eyebrow">Welland Valley Art Society</div>
-      <div class="name">Exhibition</div>
+      <div class="name" id="header-name">Exhibitions</div>
     </div>
   </div>
 </header>
@@ -167,6 +167,11 @@ function render(c) {
   document.body.classList.toggle('spring', /spring/i.test(title));
   document.title = title + ' — Welland Valley Art Society';
   const phase = phaseFor(c);
+  // Header speaks to whoever the page is for right now
+  document.getElementById('header-name').textContent =
+    phase === 'artists' || phase === 'closed' ? 'Exhibitor Information'
+    : phase === 'visitors' ? 'Exhibition Information'
+    : 'Exhibitions';
   const venue = 'Stamford Arts Centre' + (c.exhibitionDates ? ' · ' + c.exhibitionDates : '');
   const page = document.getElementById('page');
   page.replaceChildren();
