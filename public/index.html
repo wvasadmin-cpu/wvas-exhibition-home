@@ -134,8 +134,8 @@ function findUsPanel() {
       el('li', { text: "Blue Badge spaces on St Mary's Street and St George's Square" }),
     ]),
     el('p', { class: 'links' }, [
-      el('a', { href: LINKS.map, text: 'Map' }), document.createTextNode(' · '),
-      el('a', { href: LINKS.venue, text: 'Arts Centre visitor information' }),
+      el('a', { href: LINKS.map, text: 'Map ↗', target: '_blank', rel: 'noopener' }), document.createTextNode(' · '),
+      el('a', { href: LINKS.venue, text: 'Arts Centre visitor information ↗', target: '_blank', rel: 'noopener' }),
     ]),
   ]);
 }
