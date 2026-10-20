@@ -194,10 +194,10 @@ function render(c) {
     add(hero(c.handIn ? 'Entries closed · hand-in ' + c.handIn : 'Entries now closed', title, venue));
     add([el('div', { class: 'cards' }, [
       card('Book a stewarding shift', 'Expected of all exhibitors', LINKS.rotaBook, { lead: true, newTab: true }),
-      card('How to enter', 'Guidelines and conditions of entry', LINKS.howToEnter, { newTab: true }),
+      card('Find us', 'Directions and parking for hand-in', '#find-us'),
       card('Entries are closed', 'Thank you to everyone who entered', null),
       card('Artist profiles', 'Add or update yours', LINKS.profiles, { newTab: true }),
-    ]), keyDates()]);
+    ]), keyDates(), findUsPanel()]);
   } else if (phase === 'visitors') {
     add(hero('Open now' + (c.exhibitionDates ? ' · ' + c.exhibitionDates : ''), title, 'Stamford Arts Centre' + (c.openingTimes ? ' · ' + c.openingTimes : '')));
     add([el('div', { class: 'cards' }, [
@@ -221,7 +221,7 @@ function render(c) {
       el('section', { class: 'panel' }, [
         el('h2', { text: 'Our exhibitions' }),
         el('p', { text: 'Twice a year, in spring and autumn, members of the Welland Valley Art Society show and sell their work at Stamford Arts Centre — paintings, drawings, prints, sculpture and more, all by local artists.' }),
-        el('p', { class: 'links' }, [document.createTextNode('Want to exhibit with us? '), el('a', { href: LINKS.wvas, text: 'Find out more on the society website' })]),
+        el('p', { text: 'Want to exhibit with us? Details are on the society website, linked below.' }),
       ]),
     ]);
   }
