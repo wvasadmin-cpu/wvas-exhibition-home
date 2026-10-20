@@ -37,6 +37,7 @@
     .card.muted { background: var(--cream-dark); }
     .card b { display: block; font-family: 'Playfair Display', serif; font-weight: 400; font-size: 20px; color: var(--green-dark); margin-bottom: 2px; }
     .card span { font-size: 14px; color: var(--text-mid); }
+    .card.ext b::after { content: ' ↗'; font-family: 'Source Sans 3', sans-serif; font-size: 15px; color: var(--text-light); }
 
     .panel { background: #fff; border: 1px solid var(--rule); border-radius: 10px; padding: 16px 18px; margin-bottom: 22px; }
     .panel h2 { font-family: 'Playfair Display', serif; font-weight: 400; font-size: 20px; color: var(--green-dark); margin-bottom: 8px; }
@@ -110,9 +111,12 @@ function el(tag, attrs, children) {
 }
 function card(title, sub, href, opts) {
   opts = opts || {};
-  const cls = 'card' + (opts.lead ? ' lead' : '') + (href ? '' : ' muted');
-  return el(href ? 'a' : 'div', href ? { class: cls, href: href } : { class: cls },
-    [el('b', { text: title }), el('span', { text: sub })]);
+  const cls = 'card' + (opts.lead ? ' lead' : '') + (href ? '' : ' muted') + (opts.newTab ? ' ext' : '');
+  const attrs = href ? { class: cls, href: href } : { class: cls };
+  // Artist phases open the other sites in a new tab, so this page stays open as the hub
+  // (e.g. How to Enter beside the entry form). Visitors (mostly on phones) stay in the same tab.
+  if (href && opts.newTab) { attrs.target = '_blank'; attrs.rel = 'noopener'; }
+  return el(href ? 'a' : 'div', attrs, [el('b', { text: title }), el('span', { text: sub })]);
 }
 function datesPanel(title, rows) {
   const items = rows.filter(([, v]) => v).map(([label, v]) => el('div', {}, [el('strong', { text: v }), document.createTextNode(label)]));
@@ -181,18 +185,18 @@ function render(c) {
   if (phase === 'artists') {
     add(hero(c.entryCloses ? 'Entries now open · closes ' + c.entryCloses : 'Entries now open', title, venue));
     add([el('div', { class: 'cards' }, [
-      card('Enter the exhibition', 'Online entry form', LINKS.enter, { lead: true }),
-      card('How to enter', 'Guidelines and conditions of entry', LINKS.howToEnter),
-      card('Book a stewarding shift', 'Expected of all exhibitors', LINKS.rotaBook),
-      card('Artist profiles', 'Add or update yours', LINKS.profiles),
+      card('Enter the exhibition', 'Online entry form', LINKS.enter, { lead: true, newTab: true }),
+      card('How to enter', 'Guidelines and conditions of entry', LINKS.howToEnter, { newTab: true }),
+      card('Book a stewarding shift', 'Expected of all exhibitors', LINKS.rotaBook, { newTab: true }),
+      card('Artist profiles', 'Add or update yours', LINKS.profiles, { newTab: true }),
     ]), keyDates()]);
   } else if (phase === 'closed') {
     add(hero(c.handIn ? 'Entries closed · hand-in ' + c.handIn : 'Entries now closed', title, venue));
     add([el('div', { class: 'cards' }, [
-      card('Book a stewarding shift', 'Expected of all exhibitors', LINKS.rotaBook, { lead: true }),
-      card('How to enter', 'Guidelines and conditions of entry', LINKS.howToEnter),
+      card('Book a stewarding shift', 'Expected of all exhibitors', LINKS.rotaBook, { lead: true, newTab: true }),
+      card('How to enter', 'Guidelines and conditions of entry', LINKS.howToEnter, { newTab: true }),
       card('Entries are closed', 'Thank you to everyone who entered', null),
-      card('Artist profiles', 'Add or update yours', LINKS.profiles),
+      card('Artist profiles', 'Add or update yours', LINKS.profiles, { newTab: true }),
     ]), keyDates()]);
   } else if (phase === 'visitors') {
     add(hero('Open now' + (c.exhibitionDates ? ' · ' + c.exhibitionDates : ''), title, 'Stamford Arts Centre' + (c.openingTimes ? ' · ' + c.openingTimes : '')));
