@@ -30,5 +30,4 @@ as it will look on that day. Nothing is changed for anyone else.
 ## Changing a link
 
 All the other sites' addresses are in the `LINKS` block at the top of the
-script in `public/index.html` (for example, when the rota moves from Vercel
-to Netlify). The Find us text is in `findUsPanel()`.
+script in `public/index.html`. The Find us text is in `findUsPanel()`.
