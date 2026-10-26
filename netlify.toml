@@ -13,3 +13,23 @@
   for = "/"
   [headers.values]
     Cache-Control = "no-store"
+
+# Exhibition Admin lives on the entry form site (which holds the Sheets key);
+# serve it here too so there's one address to remember. 200 = proxy, not redirect.
+[[redirects]]
+  from = "/admin"
+  to = "https://wvas-ex-entry.netlify.app/admin/"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/admin/*"
+  to = "https://wvas-ex-entry.netlify.app/admin/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/admin-api/*"
+  to = "https://wvas-ex-entry.netlify.app/admin-api/:splat"
+  status = 200
+  force = true
