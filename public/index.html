@@ -142,7 +142,8 @@ function findUsPanel() {
 }
 
 /* ---------- which phase are we in? ---------- */
-// Test any phase or day without changing the settings: ?phase=artists|closed|visitors|between or ?date=2027-04-10
+// Test any phase or day without changing the settings: ?phase=artists|closed|visitors|between|upcoming or ?date=2027-04-10
+// (both work alongside ?for=exhibitors / ?for=visitors)
 function todayIso() {
   const q = new URLSearchParams(location.search).get('date');
   if (q && /^\d{4}-\d{2}-\d{2}$/.test(q)) return q;
@@ -163,17 +164,27 @@ function phaseFor(c) {
 }
 
 /* ---------- render ---------- */
+// Who the page is for: ?for=exhibitors (the members' page) or ?for=visitors (general info)
+// keep their audience all year and follow the dates within it. With neither, it picks by date.
+function audienceFor(phase) {
+  const forced = new URLSearchParams(location.search).get('for');
+  if (forced === 'exhibitors' || forced === 'visitors') return forced;
+  return phase === 'artists' || phase === 'closed' ? 'exhibitors' : phase === 'visitors' ? 'visitors' : 'general';
+}
+
 function render(c) {
   const title = (c.mainTitle || 'Exhibition').replace(/\s*[—–-]\s*Entry Form\s*$/i, '').trim();
   document.body.classList.toggle('spring', /spring/i.test(title));
   document.title = title + ' — Welland Valley Art Society';
   const phase = phaseFor(c);
-  // Header speaks to whoever the page is for right now
+  const audience = audienceFor(phase);
+  // Header speaks to whoever the page is for
   document.getElementById('header-name').textContent =
-    phase === 'artists' || phase === 'closed' ? 'Exhibitor Information'
-    : phase === 'visitors' ? 'Exhibition Information'
+    audience === 'exhibitors' ? 'Exhibitor Information'
+    : audience === 'visitors' ? 'Exhibition Information'
     : 'Exhibitions';
   const venue = 'Stamford Arts Centre' + (c.exhibitionDates ? ' · ' + c.exhibitionDates : '');
+  const venueTimes = 'Stamford Arts Centre' + (c.openingTimes ? ' · ' + c.openingTimes : '');
   const page = document.getElementById('page');
   page.replaceChildren();
 
@@ -182,53 +193,89 @@ function render(c) {
     el('h1', { text: heading }),
     el('p', { class: 'venue', text: sub }),
   ];
-  const keyDates = () => datesPanel('Key dates', [
-    ['Entries close', c.entryCloses], ['Hand-in', c.handIn], ['Private view', c.privateView],
+  const keyDates = (first) => datesPanel('Key dates', [
+    ...(first || []), ['Entries close', c.entryCloses], ['Hand-in', c.handIn], ['Private view', c.privateView],
     ['Exhibition', c.exhibitionDates], ['Collection', c.collection],
   ]);
   const add = (nodes) => nodes.forEach((n) => n && page.appendChild(n));
+  const nextText = phase === 'upcoming'
+    ? title + (c.entryOpens ? ' — entries open ' + c.entryOpens : '') + (c.exhibitionDates ? ', exhibition ' + c.exhibitionDates : '') + '.'
+    : (c.nextExhibition || 'Details of our next exhibition will be announced here.');
+  const nextPanel = () => el('section', { class: 'panel' }, [el('h2', { text: 'Next exhibition' }), el('p', { text: nextText })]);
+  const aboutPanel = (withExhibitLine) => el('section', { class: 'panel' }, [
+    el('h2', { text: 'Our exhibitions' }),
+    el('p', { text: 'Twice a year, in spring and autumn, members of the Welland Valley Art Society show and sell their work at Stamford Arts Centre — paintings, drawings, prints, sculpture and more, all by local artists.' }),
+    withExhibitLine ? el('p', { text: 'Want to exhibit with us? Details are on the society website, linked below.' }) : null,
+  ]);
 
-  if (phase === 'artists') {
-    add(hero(c.entryCloses ? 'Entries now open · closes ' + c.entryCloses : 'Entries now open', title, venue));
+  if (audience === 'exhibitors') {
+    if (phase === 'upcoming') {
+      add(hero('Coming soon' + (c.entryOpens ? ' · entries open ' + c.entryOpens : ''), title, venue));
+      add([el('div', { class: 'cards' }, [
+        card('Enter the exhibition', c.entryOpens ? 'Entry form opens ' + c.entryOpens : 'Entry form opening soon', null),
+        card('How to enter', 'Guidelines and conditions of entry', LINKS.howToEnter, { lead: true, newTab: true }),
+        card('Artist profiles', 'Add or update yours', LINKS.profiles, { newTab: true }),
+      ]), keyDates([['Entries open', c.entryOpens]])]);
+    } else if (phase === 'artists') {
+      add(hero(c.entryCloses ? 'Entries now open · closes ' + c.entryCloses : 'Entries now open', title, venue));
+      add([el('div', { class: 'cards' }, [
+        card('Enter the exhibition', 'Online entry form', LINKS.enter, { lead: true, newTab: true }),
+        card('How to enter', 'Guidelines and conditions of entry', LINKS.howToEnter, { newTab: true }),
+        card('Book a stewarding shift', 'Expected of all exhibitors', LINKS.rotaBook, { newTab: true }),
+        card('Artist profiles', 'Add or update yours', LINKS.profiles, { newTab: true }),
+      ]), keyDates()]);
+    } else if (phase === 'closed') {
+      add(hero(c.handIn ? 'Entries closed · hand-in ' + c.handIn : 'Entries now closed', title, venue));
+      add([el('div', { class: 'cards' }, [
+        card('Book a stewarding shift', 'Expected of all exhibitors', LINKS.rotaBook, { lead: true, newTab: true }),
+        card('Find us', 'Directions and parking for hand-in', '#find-us'),
+        card('Entries are closed', 'Thank you to everyone who entered', null),
+        card('Artist profiles', 'Add or update yours', LINKS.profiles, { newTab: true }),
+      ]), keyDates(), findUsPanel()]);
+    } else if (phase === 'visitors') {
+      add(hero('Exhibition open' + (c.exhibitionDates ? ' · ' + c.exhibitionDates : ''), title, venueTimes));
+      add([el('div', { class: 'cards' }, [
+        card('Stewards', 'Check your shift', LINKS.rotaBooked, { lead: true, newTab: true }),
+        card('Find us', 'Directions and parking', '#find-us'),
+        card('Browse the catalogue', 'See the exhibition online', LINKS.catalogue, { newTab: true }),
+        card('Artist profiles', 'Add or update yours', LINKS.profiles, { newTab: true }),
+      ]), datesPanel('Key dates', [['Exhibition', c.exhibitionDates], ['Collection', c.collection]]), findUsPanel()]);
+    } else {
+      // after the exhibition, until the next one is set up in Settings
+      add(hero('Thank you to everyone who exhibited', 'Exhibiting with us', 'Stamford Arts Centre'));
+      add([nextPanel(), el('div', { class: 'cards' }, [
+        card('How to enter', 'Guidelines and conditions of entry', LINKS.howToEnter, { newTab: true }),
+        card('Artist profiles', 'Add or update yours', LINKS.profiles, { newTab: true }),
+      ])]);
+    }
+  } else if (audience === 'visitors' && (phase === 'upcoming' || phase === 'artists' || phase === 'closed')) {
+    add(hero('Coming soon' + (c.exhibitionDates ? ' · ' + c.exhibitionDates : ''), title, venueTimes));
     add([el('div', { class: 'cards' }, [
-      card('Enter the exhibition', 'Online entry form', LINKS.enter, { lead: true, newTab: true }),
-      card('How to enter', 'Guidelines and conditions of entry', LINKS.howToEnter, { newTab: true }),
-      card('Book a stewarding shift', 'Expected of all exhibitors', LINKS.rotaBook, { newTab: true }),
-      card('Artist profiles', 'Add or update yours', LINKS.profiles, { newTab: true }),
-    ]), keyDates()]);
-  } else if (phase === 'closed') {
-    add(hero(c.handIn ? 'Entries closed · hand-in ' + c.handIn : 'Entries now closed', title, venue));
-    add([el('div', { class: 'cards' }, [
-      card('Book a stewarding shift', 'Expected of all exhibitors', LINKS.rotaBook, { lead: true, newTab: true }),
-      card('Find us', 'Directions and parking for hand-in', '#find-us'),
-      card('Entries are closed', 'Thank you to everyone who entered', null),
-      card('Artist profiles', 'Add or update yours', LINKS.profiles, { newTab: true }),
-    ]), keyDates(), findUsPanel()]);
+      card('Find us', 'Directions, parking, Blue Badge spaces', '#find-us', { lead: true }),
+      card('Meet the artists', 'Profiles and biographies', LINKS.artists),
+    ]), datesPanel('Visit the exhibition', [['Exhibition', c.exhibitionDates], ['Private view', c.privateView], ['Opening times', c.openingTimes]]),
+    findUsPanel()]);
   } else if (phase === 'visitors') {
-    add(hero('Open now' + (c.exhibitionDates ? ' · ' + c.exhibitionDates : ''), title, 'Stamford Arts Centre' + (c.openingTimes ? ' · ' + c.openingTimes : '')));
+    add(hero('Open now' + (c.exhibitionDates ? ' · ' + c.exhibitionDates : ''), title, venueTimes));
     add([el('div', { class: 'cards' }, [
       card('Browse the catalogue', 'Filter artists by name / view profiles', LINKS.catalogue, { lead: true }),
       card('Meet the artists', 'Profiles and biographies', LINKS.artists),
       card('Find us', 'Directions, parking, Blue Badge spaces', '#find-us'),
       card('Stewards', 'Check your shift', LINKS.rotaBooked),
     ]), findUsPanel()]);
+  } else if (audience === 'visitors') {
+    // after the exhibition, until the next one is set up in Settings
+    add(hero('Thank you for visiting', 'Welland Valley Art Society exhibitions', 'Stamford Arts Centre'));
+    add([
+      el('img', { class: 'hall', src: '/exhibition-hall.jpg', alt: 'A Welland Valley Art Society exhibition at Stamford Arts Centre' }),
+      nextPanel(), aboutPanel(false),
+    ]);
   } else {
     // 'between' (after an exhibition) or 'upcoming' (before entries open): content that doesn't date
-    const next = phase === 'upcoming'
-      ? title + (c.entryOpens ? ' — entries open ' + c.entryOpens : '') + (c.exhibitionDates ? ', exhibition ' + c.exhibitionDates : '') + '.'
-      : (c.nextExhibition || 'Details of our next exhibition will be announced here.');
     add(hero(phase === 'upcoming' ? 'Coming soon' : null, 'Welland Valley Art Society exhibitions', 'Stamford Arts Centre'));
     add([
       el('img', { class: 'hall', src: '/exhibition-hall.jpg', alt: 'A Welland Valley Art Society exhibition at Stamford Arts Centre' }),
-      el('section', { class: 'panel' }, [
-        el('h2', { text: 'Next exhibition' }),
-        el('p', { text: next }),
-      ]),
-      el('section', { class: 'panel' }, [
-        el('h2', { text: 'Our exhibitions' }),
-        el('p', { text: 'Twice a year, in spring and autumn, members of the Welland Valley Art Society show and sell their work at Stamford Arts Centre — paintings, drawings, prints, sculpture and more, all by local artists.' }),
-        el('p', { text: 'Want to exhibit with us? Details are on the society website, linked below.' }),
-      ]),
+      nextPanel(), aboutPanel(true),
     ]);
   }
 }
