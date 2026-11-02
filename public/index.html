@@ -53,6 +53,25 @@
     footer .inner { max-width: 760px; margin: 0 auto; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; font-size: 14px; color: var(--text-mid); }
     footer a { color: var(--text-mid); }
 
+    /* Exhibitor page extras */
+    .welcome { font-size: 17px; color: var(--text); margin: -8px 0 20px; }
+    .panel-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+    .countdown { font-size: 14px; font-weight: 600; color: var(--accent-ink); background: var(--accent-tint); padding: 2px 10px; border-radius: 12px; }
+    .timeline { list-style: none; margin-top: 6px; }
+    .timeline li { position: relative; padding: 0 0 12px 28px; font-size: 15px; color: var(--text-mid); }
+    .timeline li::before { content: ''; position: absolute; left: 5px; top: 6px; width: 12px; height: 12px; border-radius: 50%; background: #fff; border: 2px solid var(--rule); box-sizing: border-box; }
+    .timeline li::after { content: ''; position: absolute; left: 10px; top: 20px; bottom: -4px; width: 2px; background: var(--rule); }
+    .timeline li:last-child { padding-bottom: 0; }
+    .timeline li:last-child::after { display: none; }
+    .timeline li strong { color: var(--text); font-weight: 600; margin-right: 6px; }
+    .timeline li.done { color: var(--text-light); }
+    .timeline li.done strong { color: var(--text-light); }
+    .timeline li.done::before { background: var(--green-mid); border-color: var(--green-mid); }
+    .timeline li.now::before { background: var(--accent); border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-tint); }
+    .timeline .here { font-size: 12px; font-weight: 600; background: var(--accent-tint); color: var(--accent-ink); padding: 1px 8px; border-radius: 10px; margin-left: 6px; white-space: nowrap; }
+    .glance li { margin-bottom: 4px; }
+    .contact { border-left: 4px solid var(--accent); }
+
     #loading { color: var(--text-light); font-size: 15px; }
     @media (max-width: 560px) { .cards { grid-template-columns: 1fr; } }
   </style>
@@ -150,6 +169,9 @@ function todayIso() {
   const d = new Date();
   return [d.getFullYear(), String(d.getMonth() + 1).padStart(2, '0'), String(d.getDate()).padStart(2, '0')].join('-');
 }
+function localIso(d) {
+  return [d.getFullYear(), String(d.getMonth() + 1).padStart(2, '0'), String(d.getDate()).padStart(2, '0')].join('-');
+}
 function phaseFor(c) {
   const forced = new URLSearchParams(location.search).get('phase');
   if (['artists', 'closed', 'visitors', 'between', 'upcoming'].includes(forced)) return forced;
@@ -193,10 +215,6 @@ function render(c) {
     el('h1', { text: heading }),
     el('p', { class: 'venue', text: sub }),
   ];
-  const keyDates = (first) => datesPanel('Key dates', [
-    ...(first || []), ['Entries close', c.entryCloses], ['Hand-in', c.handIn], ['Private view', c.privateView],
-    ['Exhibition', c.exhibitionDates], ['Collection', c.collection],
-  ]);
   const add = (nodes) => nodes.forEach((n) => n && page.appendChild(n));
   const nextText = phase === 'upcoming'
     ? title + (c.entryOpens ? ' — entries open ' + c.entryOpens : '') + (c.exhibitionDates ? ', exhibition ' + c.exhibitionDates : '') + '.'
@@ -208,45 +226,100 @@ function render(c) {
     withExhibitLine ? el('p', { text: 'Want to exhibit with us? Details are on the society website, linked below.' }) : null,
   ]);
 
+  // ---- exhibitor page extras ----
+  const EXHIBITION_EMAIL = 'wvas_exhibition@yahoo.com', MEMBERSEC_EMAIL = 'WVASMembersec@gmail.com';
+  const welcome = (text) => el('p', { class: 'welcome', text: text });
+  const hall = () => el('img', { class: 'hall', src: '/exhibition-hall.jpg', alt: 'A Welland Valley Art Society exhibition at Stamford Arts Centre' });
+  const daysTo = (iso) => Math.round((new Date(iso + 'T12:00:00') - new Date(todayIso() + 'T12:00:00')) / 86400000);
+  const when = (n) => (n <= 0 ? 'today' : n === 1 ? 'tomorrow' : 'in ' + n + ' days');
+  const timeline = () => {
+    const steps = [['Entries open', c.entryOpens], ['Entries close', c.entryCloses], ['Hand-in', c.handIn],
+      ['Private view', c.privateView], ['Exhibition', c.exhibitionDates], ['Collection', c.collection]];
+    // the step coming up next (or on now), by phase; everything before it is done
+    const next = { upcoming: 0, artists: 1, closed: 2, visitors: 4 }[phase] ?? steps.length;
+    let countdown = null;
+    if (phase === 'upcoming' && c.entryOpensOn && daysTo(c.entryOpensOn) <= 60) countdown = 'Entries open ' + when(daysTo(c.entryOpensOn));
+    if (phase === 'artists' && c.entryClosesAt) {
+      const d = new Date(c.entryClosesAt);
+      if (!isNaN(d)) countdown = 'Entries close ' + when(daysTo(localIso(d)));
+    }
+    if (phase === 'visitors' && c.exhibitionClosesOn) countdown = 'Exhibition closes ' + when(daysTo(c.exhibitionClosesOn));
+    const items = steps.map(([label, v], i) => v && el('li', { class: i < next ? 'done' : i === next ? 'now' : '' }, [
+      el('strong', { text: label }), document.createTextNode(v),
+      i === next ? el('span', { class: 'here', text: phase === 'visitors' ? 'On now' : 'Next' }) : null,
+    ]));
+    return el('section', { class: 'panel' }, [
+      el('div', { class: 'panel-head' }, [el('h2', { text: 'Key dates' }), countdown ? el('span', { class: 'countdown', text: countdown }) : null]),
+      el('ol', { class: 'timeline' }, items),
+    ]);
+  };
+  // The essentials only; the full rules stay on How to Enter.
+  const glance = () => el('section', { class: 'panel' }, [
+    el('h2', { text: 'At a glance' }),
+    el('ul', { class: 'glance' }, [
+      el('li', { text: 'Enter 2 to 4 works, plus an optional Small Affordable Work (priced £75 or less)' }),
+      el('li', { text: '£10 entry fee, paid securely on the entry form' }),
+      el('li', { text: 'Every exhibitor stewards at least 3 sessions during the exhibition' }),
+      el('li', { text: 'Keep titles to about 40 characters so they fit on the labels' }),
+    ]),
+    el('p', { class: 'links' }, [el('a', { href: LINKS.howToEnter, text: 'Full guidelines and conditions of entry ↗', target: '_blank', rel: 'noopener' })]),
+  ]);
+  const contact = () => el('section', { class: 'panel contact' }, [
+    el('h2', { text: 'Questions?' }),
+    el('p', {}, [document.createTextNode('Email the exhibition team at '), el('a', { href: 'mailto:' + EXHIBITION_EMAIL, text: EXHIBITION_EMAIL }), document.createTextNode('.')]),
+    phase === 'artists' || phase === 'closed'
+      ? el('p', {}, [document.createTextNode('To change an entry after sending it, please tell the Membership Secretary at '), el('a', { href: 'mailto:' + MEMBERSEC_EMAIL, text: MEMBERSEC_EMAIL }), document.createTextNode('.')])
+      : null,
+  ]);
+
   if (audience === 'exhibitors') {
     if (phase === 'upcoming') {
       add(hero('Coming soon' + (c.entryOpens ? ' · entries open ' + c.entryOpens : ''), title, venue));
-      add([el('div', { class: 'cards' }, [
+      add([welcome("We'd love to see your work on the walls" + (c.entryOpens ? ' — entries open on ' + c.entryOpens : '') +
+        ". Have a read of How to Enter so you're ready, and check your artist profile is up to date."), hall(),
+      el('div', { class: 'cards' }, [
         card('Enter the exhibition', c.entryOpens ? 'Entry form opens ' + c.entryOpens : 'Entry form opening soon', null),
         card('How to enter', 'Guidelines and conditions of entry', LINKS.howToEnter, { lead: true, newTab: true }),
         card('Artist profiles', 'Add or update yours', LINKS.profiles, { newTab: true }),
-      ]), keyDates([['Entries open', c.entryOpens]])]);
+      ]), timeline(), glance(), contact()]);
     } else if (phase === 'artists') {
       add(hero(c.entryCloses ? 'Entries now open · closes ' + c.entryCloses : 'Entries now open', title, venue));
-      add([el('div', { class: 'cards' }, [
+      add([welcome("Entries are open, and we'd love to see your work on the walls. Read How to Enter, send in your entry" +
+        (c.entryCloses ? ' by ' + c.entryCloses : '') + ', and book your stewarding shifts while there\'s plenty of choice.'), hall(),
+      el('div', { class: 'cards' }, [
         card('Enter the exhibition', 'Online entry form', LINKS.enter, { lead: true, newTab: true }),
         card('How to enter', 'Guidelines and conditions of entry', LINKS.howToEnter, { newTab: true }),
         card('Book a stewarding shift', 'Expected of all exhibitors', LINKS.rotaBook, { newTab: true }),
         card('Artist profiles', 'Add or update yours', LINKS.profiles, { newTab: true }),
-      ]), keyDates()]);
+      ]), timeline(), glance(), contact()]);
     } else if (phase === 'closed') {
       add(hero(c.handIn ? 'Entries closed · hand-in ' + c.handIn : 'Entries now closed', title, venue));
-      add([el('div', { class: 'cards' }, [
+      add([welcome('Thank you for your entries! ' + (c.handIn ? 'Hand-in is ' + c.handIn + ' at Stamford Arts Centre. ' : '') +
+        "If you haven't booked your stewarding shifts yet, now's the time."), hall(),
+      el('div', { class: 'cards' }, [
         card('Book a stewarding shift', 'Expected of all exhibitors', LINKS.rotaBook, { lead: true, newTab: true }),
         card('Find us', 'Directions and parking for hand-in', '#find-us'),
         card('Entries are closed', 'Thank you to everyone who entered', null),
         card('Artist profiles', 'Add or update yours', LINKS.profiles, { newTab: true }),
-      ]), keyDates(), findUsPanel()]);
+      ]), timeline(), findUsPanel(), contact()]);
     } else if (phase === 'visitors') {
       add(hero('Exhibition open' + (c.exhibitionDates ? ' · ' + c.exhibitionDates : ''), title, venueTimes));
-      add([el('div', { class: 'cards' }, [
+      add([welcome('The exhibition is open — thank you to everyone taking part. ' +
+        (c.collection ? 'Please remember to collect unsold work on ' + c.collection + '.' : '')), hall(),
+      el('div', { class: 'cards' }, [
         card('Stewards', 'Check your shift', LINKS.rotaBooked, { lead: true, newTab: true }),
         card('Find us', 'Directions and parking', '#find-us'),
         card('Browse the catalogue', 'See the exhibition online', LINKS.catalogue, { newTab: true }),
         card('Artist profiles', 'Add or update yours', LINKS.profiles, { newTab: true }),
-      ]), datesPanel('Key dates', [['Exhibition', c.exhibitionDates], ['Collection', c.collection]]), findUsPanel()]);
+      ]), timeline(), findUsPanel(), contact()]);
     } else {
       // after the exhibition, until the next one is set up in Settings
       add(hero('Thank you to everyone who exhibited', 'Exhibiting with us', 'Stamford Arts Centre'));
-      add([nextPanel(), el('div', { class: 'cards' }, [
+      add([welcome("Thank you for being part of this exhibition. Details of the next one will appear here as soon as they're set."), hall(),
+      nextPanel(), el('div', { class: 'cards' }, [
         card('How to enter', 'Guidelines and conditions of entry', LINKS.howToEnter, { newTab: true }),
         card('Artist profiles', 'Add or update yours', LINKS.profiles, { newTab: true }),
-      ])]);
+      ]), contact()]);
     }
   } else if (audience === 'visitors' && (phase === 'upcoming' || phase === 'artists' || phase === 'closed')) {
     add(hero('Coming soon' + (c.exhibitionDates ? ' · ' + c.exhibitionDates : ''), title, venueTimes));
