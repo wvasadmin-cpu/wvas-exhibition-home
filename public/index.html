@@ -73,9 +73,11 @@
     .contact { border-left: 4px solid var(--accent); }
 
     /* Portrait video beside the text panels (general page); stacks below them on phones */
-    .with-video { display: grid; grid-template-columns: minmax(0, 1fr) 270px; gap: 22px; align-items: start; margin-bottom: 22px; }
-    .with-video .panel:last-child { margin-bottom: 0; }
-    .clip-wrap { position: relative; }
+    .with-video { display: grid; grid-template-columns: minmax(0, 1fr) 270px; gap: 22px; margin-bottom: 22px; }
+    /* the last text panel stretches so its bottom edge lines up with the video's */
+    .with-video > div:first-child { display: flex; flex-direction: column; }
+    .with-video .panel:last-child { margin-bottom: 0; flex: 1; }
+    .clip-wrap { position: relative; align-self: start; }
     .clip { width: 100%; aspect-ratio: 9 / 16; display: block; object-fit: cover; background: var(--cream-dark); border: 1px solid var(--rule); border-radius: 10px; }
     .clip-btn { position: absolute; right: 10px; bottom: 10px; width: 36px; height: 36px; border: 0; border-radius: 50%; background: rgba(42, 34, 24, .6); color: #fff; font-size: 14px; line-height: 36px; cursor: pointer; }
     .clip-btn:hover, .clip-btn:focus-visible { background: rgba(42, 34, 24, .85); }
@@ -262,6 +264,7 @@ function render(c) {
   const aboutPanel = (withExhibitLine) => el('section', { class: 'panel' }, [
     el('h2', { text: 'Our exhibitions' }),
     el('p', { text: 'Twice a year, in spring and autumn, members of the Welland Valley Art Society show and sell their work at Stamford Arts Centre — paintings, drawings, prints, sculpture and more, all by local artists.' }),
+    el('p', { text: 'Watch this space for more details and confirmed dates for entries and viewing.' }),
     withExhibitLine ? el('p', { text: 'Want to exhibit with us? Details are on the society website, linked below.' }) : null,
   ]);
 
