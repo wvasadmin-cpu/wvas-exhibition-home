@@ -72,8 +72,20 @@
     .glance li { margin-bottom: 4px; }
     .contact { border-left: 4px solid var(--accent); }
 
+    /* Portrait video beside the text panels (general page); stacks below them on phones */
+    .with-video { display: grid; grid-template-columns: minmax(0, 1fr) 270px; gap: 22px; align-items: start; margin-bottom: 22px; }
+    .with-video .panel:last-child { margin-bottom: 0; }
+    .clip-wrap { position: relative; }
+    .clip { width: 100%; aspect-ratio: 9 / 16; display: block; object-fit: cover; background: var(--cream-dark); border: 1px solid var(--rule); border-radius: 10px; }
+    .clip-btn { position: absolute; right: 10px; bottom: 10px; width: 36px; height: 36px; border: 0; border-radius: 50%; background: rgba(42, 34, 24, .6); color: #fff; font-size: 14px; line-height: 36px; cursor: pointer; }
+    .clip-btn:hover, .clip-btn:focus-visible { background: rgba(42, 34, 24, .85); }
+
     #loading { color: var(--text-light); font-size: 15px; }
     @media (max-width: 560px) { .cards { grid-template-columns: 1fr; } }
+    @media (max-width: 640px) {
+      .with-video { grid-template-columns: 1fr; }
+      .clip-wrap { width: 100%; max-width: 280px; margin: 0 auto; }
+    }
   </style>
 </head>
 <body>
@@ -142,6 +154,33 @@ function datesPanel(title, rows) {
   const items = rows.filter(([, v]) => v).map(([label, v]) => el('div', {}, [el('strong', { text: v }), document.createTextNode(label)]));
   return items.length ? el('section', { class: 'panel' }, [el('h2', { text: title }), el('div', { class: 'dates' }, items)]) : null;
 }
+// Short muted looping clip from an exhibition opening (portrait, ~5 MB). It plays on its own
+// unless the visitor has asked for reduced motion; the round button pauses / plays it.
+function openingClip() {
+  const v = document.createElement('video');
+  v.className = 'clip';
+  v.src = '/exhibition-opening.mp4';
+  v.poster = '/exhibition-opening-poster.jpg';
+  v.muted = true; v.defaultMuted = true; v.loop = true; v.playsInline = true;
+  v.setAttribute('playsinline', ''); v.setAttribute('muted', '');
+  v.setAttribute('aria-label', 'Short video of artists and visitors at an exhibition opening');
+  const still = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (still) v.preload = 'none'; else v.autoplay = true;
+  const btn = el('button', { class: 'clip-btn', type: 'button' });
+  const sync = () => {
+    btn.textContent = v.paused ? '▶' : '❚❚';
+    btn.setAttribute('aria-label', v.paused ? 'Play video' : 'Pause video');
+  };
+  v.addEventListener('play', sync); v.addEventListener('pause', sync);
+  btn.addEventListener('click', () => (v.paused ? v.play() : v.pause()));
+  sync();
+  return el('div', { class: 'clip-wrap' }, [v, btn]);
+}
+// Text panels on the left, the video on the right
+function withVideo(panels) {
+  return el('div', { class: 'with-video' }, [el('div', {}, panels), openingClip()]);
+}
+
 function findUsPanel() {
   return el('section', { class: 'panel', id: 'find-us' }, [
     el('h2', { text: 'Find us' }),
@@ -341,14 +380,14 @@ function render(c) {
     add(hero('Thank you for visiting', 'Welland Valley Art Society exhibitions', 'Stamford Arts Centre'));
     add([
       el('img', { class: 'hall', src: '/exhibition-hall.jpg', alt: 'A Welland Valley Art Society exhibition at Stamford Arts Centre' }),
-      nextPanel(), aboutPanel(false),
+      withVideo([nextPanel(), aboutPanel(false)]),
     ]);
   } else {
     // 'between' (after an exhibition) or 'upcoming' (before entries open): content that doesn't date
     add(hero(phase === 'upcoming' ? 'Coming soon' : null, 'Welland Valley Art Society exhibitions', 'Stamford Arts Centre'));
     add([
       el('img', { class: 'hall', src: '/exhibition-hall.jpg', alt: 'A Welland Valley Art Society exhibition at Stamford Arts Centre' }),
-      nextPanel(), aboutPanel(true),
+      withVideo([nextPanel(), aboutPanel(true)]),
     ]);
   }
 }
