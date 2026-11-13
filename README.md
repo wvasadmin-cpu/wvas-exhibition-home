@@ -28,8 +28,8 @@ The official WVAS site links here twice:
 - **Exhibitors** — `?for=exhibitors`, members only. It asks for the
   Exhibitors' password (the same one as on the society website), checked by
   `netlify/functions/exhibitors.mjs` against the `EXHIBITORS_PASSWORD`
-  variable on this Netlify site. A correct password is remembered for 90 days;
-  "Lock this page" at the bottom forgets it. When the society changes the
+  variable on this Netlify site. Nothing is remembered: it asks every
+  time the page is opened, so it always looks protected. When the society changes the
   Exhibitors' password, update `EXHIBITORS_PASSWORD` here (and
   `CONTACTS_PASSWORD` on the rota), then redeploy. This repo is public, so the
   password must never be written into it. It's a polite gate, not real

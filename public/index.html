@@ -58,7 +58,6 @@
     .gate input { flex: 1 1 200px; font: inherit; font-size: 16px; padding: 9px 12px; border: 1px solid var(--rule); border-radius: 8px; }
     .gate button { font: inherit; font-size: 16px; font-weight: 600; padding: 9px 18px; border: 0; border-radius: 8px; background: var(--green-dark); color: #fff; cursor: pointer; }
     .gate .wrong { color: #a23b2a; font-weight: 600; margin-top: 8px; }
-    .lock { font-size: 13px; text-align: right; }
 
     /* Exhibitor page extras */
     .welcome { font-size: 17px; color: var(--text); margin: -8px 0 20px; }
@@ -245,7 +244,7 @@ function audienceFor(phase) {
 
 /* ---------- members-only gate (exhibitor page) ---------- */
 // A polite gate, not real security: nothing on the exhibitor page is secret. The password is
-// checked by netlify/functions/exhibitors.mjs, which remembers this browser for 90 days.
+// checked by netlify/functions/exhibitors.mjs and not remembered: it's asked for on every visit.
 const GATE_URL = '/api/exhibitors';
 let unlocked = false;
 function gate(c) {
@@ -273,14 +272,6 @@ function gate(c) {
     ]),
   );
   input.focus();
-}
-function lockLink() {
-  const a = el('a', { href: '#', text: 'Lock this page' });
-  a.addEventListener('click', (e) => {
-    e.preventDefault();
-    fetch(GATE_URL, { method: 'DELETE' }).finally(() => location.reload());
-  });
-  return el('p', { class: 'lock' }, [a]);
 }
 
 function render(c) {
@@ -445,16 +436,12 @@ function render(c) {
       withVideo([nextPanel(), aboutPanel(true)]),
     ]);
   }
-  if (audience === 'exhibitors') page.appendChild(lockLink());
 }
 
-const settings = fetch(CONFIG_URL)
+fetch(CONFIG_URL)
   .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
-  .catch(() => ({ unavailable: true })); // settings unavailable: show the plain "between exhibitions" page rather than nothing
-const remembered = FOR === 'exhibitors'
-  ? fetch(GATE_URL).then((r) => r.json()).then((j) => j.ok === true).catch(() => false)
-  : Promise.resolve(false);
-Promise.all([settings, remembered]).then(([c, ok]) => { unlocked = ok; render(c); });
+  .then(render)
+  .catch(() => render({ unavailable: true })); // settings unavailable: show the plain "between exhibitions" page rather than nothing
 </script>
 </body>
 </html>
