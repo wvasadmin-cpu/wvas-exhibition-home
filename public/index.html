@@ -53,6 +53,13 @@
     footer .inner { max-width: 760px; margin: 0 auto; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; font-size: 14px; color: var(--text-mid); }
     footer a { color: var(--text-mid); }
 
+    /* Members-only gate for ?for=exhibitors */
+    .gate form { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+    .gate input { flex: 1 1 200px; font: inherit; font-size: 16px; padding: 9px 12px; border: 1px solid var(--rule); border-radius: 8px; }
+    .gate button { font: inherit; font-size: 16px; font-weight: 600; padding: 9px 18px; border: 0; border-radius: 8px; background: var(--green-dark); color: #fff; cursor: pointer; }
+    .gate .wrong { color: #a23b2a; font-weight: 600; margin-top: 8px; }
+    .lock { font-size: 13px; text-align: right; }
+
     /* Exhibitor page extras */
     .welcome { font-size: 17px; color: var(--text); margin: -8px 0 20px; }
     .panel-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
@@ -227,12 +234,53 @@ function phaseFor(c) {
 }
 
 /* ---------- render ---------- */
-// Who the page is for: ?for=exhibitors (the members' page) or ?for=visitors (general info)
-// keep their audience all year and follow the dates within it. With neither, it picks by date.
+// Who the page is for: ?for=exhibitors (the members' page, password-gated) or ?for=visitors (general info)
+// keep their audience all year and follow the dates within it. With neither, the page stays public:
+// visitor info from entries opening to the exhibition closing, general info the rest of the year.
+const FOR = new URLSearchParams(location.search).get('for');
 function audienceFor(phase) {
-  const forced = new URLSearchParams(location.search).get('for');
-  if (forced === 'exhibitors' || forced === 'visitors') return forced;
-  return phase === 'artists' || phase === 'closed' ? 'exhibitors' : phase === 'visitors' ? 'visitors' : 'general';
+  if (FOR === 'exhibitors' || FOR === 'visitors') return FOR;
+  return phase === 'artists' || phase === 'closed' || phase === 'visitors' ? 'visitors' : 'general';
+}
+
+/* ---------- members-only gate (exhibitor page) ---------- */
+// A polite gate, not real security: nothing on the exhibitor page is secret. The password is
+// checked by netlify/functions/exhibitors.mjs, which remembers this browser for 90 days.
+const GATE_URL = '/api/exhibitors';
+let unlocked = false;
+function gate(c) {
+  const input = el('input', { type: 'password', id: 'gate-pw', autocomplete: 'current-password', 'aria-label': "Exhibitors' password", placeholder: "Exhibitors' password", required: '' });
+  const wrong = el('p', { class: 'wrong', role: 'alert' });
+  const form = el('form', {}, [input, el('button', { type: 'submit', text: 'Continue' })]);
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    wrong.textContent = '';
+    fetch(GATE_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password: input.value }) })
+      .then((r) => r.json())
+      .then((j) => {
+        if (j.ok) { unlocked = true; render(c); window.scrollTo(0, 0); }
+        else { wrong.textContent = "That password isn't right. It's the same Exhibitors' password as on the society website."; input.select(); }
+      })
+      .catch(() => { wrong.textContent = "Couldn't check the password just now. Please try again in a moment."; });
+  });
+  const page = document.getElementById('page');
+  page.replaceChildren(
+    el('span', { class: 'pill', text: 'Members only' }),
+    el('h1', { text: 'Exhibitor Information' }),
+    el('section', { class: 'panel gate' }, [
+      el('p', { text: "This page is for WVAS members exhibiting with us. Please enter the Exhibitors' password, the same one used on the society website." }),
+      form, wrong,
+    ]),
+  );
+  input.focus();
+}
+function lockLink() {
+  const a = el('a', { href: '#', text: 'Lock this page' });
+  a.addEventListener('click', (e) => {
+    e.preventDefault();
+    fetch(GATE_URL, { method: 'DELETE' }).finally(() => location.reload());
+  });
+  return el('p', { class: 'lock' }, [a]);
 }
 
 function render(c) {
@@ -241,6 +289,10 @@ function render(c) {
   document.title = title + ' — Welland Valley Art Society';
   const phase = phaseFor(c);
   const audience = audienceFor(phase);
+  if (audience === 'exhibitors' && !unlocked) {
+    document.getElementById('header-name').textContent = 'Exhibitor Information';
+    return gate(c);
+  }
   // Header speaks to whoever the page is for
   document.getElementById('header-name').textContent =
     audience === 'exhibitors' ? 'Exhibitor Information'
@@ -393,12 +445,16 @@ function render(c) {
       withVideo([nextPanel(), aboutPanel(true)]),
     ]);
   }
+  if (audience === 'exhibitors') page.appendChild(lockLink());
 }
 
-fetch(CONFIG_URL)
+const settings = fetch(CONFIG_URL)
   .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
-  .then(render)
-  .catch(() => render({ unavailable: true })); // settings unavailable: show the plain "between exhibitions" page rather than nothing
+  .catch(() => ({ unavailable: true })); // settings unavailable: show the plain "between exhibitions" page rather than nothing
+const remembered = FOR === 'exhibitors'
+  ? fetch(GATE_URL).then((r) => r.json()).then((j) => j.ok === true).catch(() => false)
+  : Promise.resolve(false);
+Promise.all([settings, remembered]).then(([c, ok]) => { unlocked = ok; render(c); });
 </script>
 </body>
 </html>

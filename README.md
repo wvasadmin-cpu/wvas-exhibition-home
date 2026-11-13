@@ -1,7 +1,8 @@
 # WVAS Exhibition Home
 
 One address and one QR code for everything about a WVAS exhibition. A single
-static page (`public/index.html`), no build step and no secrets.
+static page (`public/index.html`), no build step, plus one small function for
+the exhibitor page's password.
 
 ## What it shows
 
@@ -16,6 +17,25 @@ entry form's settings page (Exhibition Admin → Entry Form Settings, at
 | Entries closed | after the cut-off, before "Exhibition Opens On" | artists: stewarding, key dates |
 | Exhibition on | "Exhibition Opens On" to "Exhibition Closes On" | visitors: catalogue, artists, find us |
 | Between exhibitions | after "Exhibition Closes On" | everyone: photo, next exhibition |
+
+## Two audiences
+
+The official WVAS site links here twice:
+
+- **Information** — the plain address, open to everyone. From entries opening
+  until the exhibition closes it shows the visitor view (dates, find us,
+  catalogue); the rest of the year, the general "our exhibitions" page.
+- **Exhibitors** — `?for=exhibitors`, members only. It asks for the
+  Exhibitors' password (the same one as on the society website), checked by
+  `netlify/functions/exhibitors.mjs` against the `EXHIBITORS_PASSWORD`
+  variable on this Netlify site. A correct password is remembered for 90 days;
+  "Lock this page" at the bottom forgets it. When the society changes the
+  Exhibitors' password, update `EXHIBITORS_PASSWORD` here (and
+  `CONTACTS_PASSWORD` on the rota), then redeploy. This repo is public, so the
+  password must never be written into it. It's a polite gate, not real
+  security: nothing on the exhibitor page is secret.
+
+`?for=visitors` forces the visitor view all year.
 
 Title, dates, opening times and "Next exhibition" all come from that page;
 nothing here needs editing between exhibitions. The accent colour follows the
