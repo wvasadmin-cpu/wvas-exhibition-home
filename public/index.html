@@ -427,6 +427,7 @@ function render(c) {
     add([
       el('img', { class: 'hall', src: '/exhibition-hall.jpg', alt: 'A Welland Valley Art Society exhibition at Stamford Arts Centre' }),
       withVideo([nextPanel(), aboutPanel(false)]),
+      findUsPanel(),
     ]);
   } else {
     // 'between' (after an exhibition) or 'upcoming' (before entries open): content that doesn't date
@@ -434,6 +435,7 @@ function render(c) {
     add([
       el('img', { class: 'hall', src: '/exhibition-hall.jpg', alt: 'A Welland Valley Art Society exhibition at Stamford Arts Centre' }),
       withVideo([nextPanel(), aboutPanel(true)]),
+      findUsPanel(),
     ]);
   }
 }
