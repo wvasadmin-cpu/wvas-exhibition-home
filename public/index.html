@@ -365,6 +365,8 @@ function render(c) {
       el('div', { class: 'cards' }, [
         card('Enter the exhibition', c.entryOpens ? 'Entry form opens ' + c.entryOpens : 'Entry form opening soon', null),
         card('How to enter', 'Guidelines and conditions of entry', LINKS.howToEnter, { lead: true, newTab: true }),
+        // The rota is read-only until entries open, so members can pencil shifts into their diaries
+        card('Preview the stewarding rota', 'See the shifts now' + (c.entryOpens ? '; booking opens ' + c.entryOpens : ''), LINKS.rotaBook, { newTab: true }),
         card('Artist profiles', 'Add or update yours', LINKS.profiles, { newTab: true }),
       ]), timeline(), glance(), contact()]);
     } else if (phase === 'artists') {
