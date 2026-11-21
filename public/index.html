@@ -359,7 +359,7 @@ function render(c) {
 
   if (audience === 'exhibitors') {
     if (phase === 'upcoming') {
-      aadd(hero(c.entryOpens ? 'Entries open ' + c.entryOpens : null, title, venue));
+      add(hero(c.entryOpens ? 'Entries open ' + c.entryOpens : null, title, venue));
       add([welcome("We'd love to see your work on the walls" + (c.entryOpens ? ' — entries open on ' + c.entryOpens : '') +
         ". Have a read of How to Enter so you're ready, and check your artist profile is up to date."), hall(),
       el('div', { class: 'cards' }, [
