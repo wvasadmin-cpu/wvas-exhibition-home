@@ -142,7 +142,7 @@ const LINKS = {
   howToEnter:  'https://wvas-ex-guide.netlify.app/',
   rotaBook:    'https://wvas-ex-rota.netlify.app/overview',
   rotaBooked:  'https://wvas-ex-rota.netlify.app/booked',
-  profiles:    'https://wvas-ex-profiles.netlify.app/',
+  profiles:    'https://wvas-ex-profiles.netlify.app/#check',
   catalogue:   'https://wvas-ex-catalogue.netlify.app/catalogue/',
   artists:     'https://wvas-ex-catalogue.netlify.app/profiles/',
   wvas:        'https://www.wellandvalleyartsociety.co.uk/',
@@ -379,7 +379,7 @@ function render(c) {
         card('How to enter', 'Guidelines and conditions of entry', LINKS.howToEnter, { lead: true, newTab: true }),
         // The rota is read-only until entries open, so members can pencil shifts into their diaries
         card('Preview the stewarding rota', 'See the shifts now' + (c.entryOpens ? '; booking opens ' + c.entryOpens : ''), LINKS.rotaBook, { newTab: true }),
-        card('Artist profiles', 'Add or update yours', LINKS.profiles, { newTab: true }),
+        card('Artist profiles', 'Check, update or add yours', LINKS.profiles, { newTab: true }),
       ]), timeline(), glance(), contact()]);
     } else if (phase === 'artists') {
       add(hero(c.entryCloses ? 'Entries now open · closes ' + c.entryCloses : 'Entries now open', title, venue));
@@ -389,7 +389,7 @@ function render(c) {
         card('Enter the exhibition', 'Online entry form', LINKS.enter, { lead: true, newTab: true }),
         card('How to enter', 'Guidelines and conditions of entry', LINKS.howToEnter, { newTab: true }),
         card('Book a stewarding shift', 'Expected of all exhibitors', LINKS.rotaBook, { newTab: true }),
-        card('Artist profiles', 'Add or update yours', LINKS.profiles, { newTab: true }),
+        card('Artist profiles', 'Check, update or add yours', LINKS.profiles, { newTab: true }),
       ]), timeline(), glance(), contact()]);
     } else if (phase === 'closed') {
       add(hero(c.handIn ? 'Entries closed · hand-in ' + c.handIn : 'Entries now closed', title, venue));
@@ -399,7 +399,7 @@ function render(c) {
         card('Book a stewarding shift', 'Expected of all exhibitors', LINKS.rotaBook, { lead: true, newTab: true }),
         card('Find us', 'Directions and parking for hand-in', '#find-us'),
         card('Entries are closed', 'Thank you to everyone who entered', null),
-        card('Artist profiles', 'Add or update yours', LINKS.profiles, { newTab: true }),
+        card('Artist profiles', 'Check, update or add yours', LINKS.profiles, { newTab: true }),
       ]), timeline(), findUsPanel(), contact()]);
     } else if (phase === 'visitors') {
       add(hero('Exhibition open' + (c.exhibitionDates ? ' · ' + c.exhibitionDates : ''), title, venueTimes));
@@ -409,7 +409,7 @@ function render(c) {
         card('Stewards', 'Check your shift', LINKS.rotaBooked, { lead: true, newTab: true }),
         card('Find us', 'Directions and parking', '#find-us'),
         card('Browse the catalogue', 'See the exhibition online', LINKS.catalogue, { newTab: true }),
-        card('Artist profiles', 'Add or update yours', LINKS.profiles, { newTab: true }),
+        card('Artist profiles', 'Check, update or add yours', LINKS.profiles, { newTab: true }),
       ]), timeline(), findUsPanel(), contact()]);
     } else {
       // after the exhibition, until the next one is set up in Settings
@@ -417,7 +417,7 @@ function render(c) {
       add([welcome("Thank you for being part of this exhibition. Details of the next one will appear here as soon as they're set."), hall(),
       nextPanel(), el('div', { class: 'cards' }, [
         card('How to enter', 'Guidelines and conditions of entry', LINKS.howToEnter, { newTab: true }),
-        card('Artist profiles', 'Add or update yours', LINKS.profiles, { newTab: true }),
+        card('Artist profiles', 'Check, update or add yours', LINKS.profiles, { newTab: true }),
       ]), contact()]);
     }
   } else if (audience === 'visitors' && (phase === 'upcoming' || phase === 'artists' || phase === 'closed')) {
